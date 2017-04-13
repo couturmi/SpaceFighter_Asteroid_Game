@@ -1,6 +1,6 @@
 var scene, camera, renderer;
 var movingRight, movingLeft, movingUp, movingDown;
-var background, ship, sights;
+var background, ship, sights, asteroid;
 
 init();
 animate();
@@ -12,6 +12,7 @@ function init() {
     movingLeft = false;
     movingUp = false;
     movingDown = false;
+    asteroidCF = new THREE.Matrix4();
 
     //initialize scene
     scene = new THREE.Scene();
@@ -41,6 +42,10 @@ function init() {
     sights = new LazerSights();
     scene.add(sights);
 
+    //add asteroids
+    asteroid = new Asteroid();
+    scene.add(asteroid.object);
+
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
     camera.position.z = 2000;
 
@@ -56,10 +61,13 @@ function animate() {
     ship.rotation.x = (((sights.position.y/(window.innerHeight/2))/2)/Math.PI) + Math.PI*1.5;
     ship.rotation.z = (-(sights.position.x/(window.innerWidth/2))/2)/Math.PI;
 
-    //checks if ship should move
+    //checks if ship should be moving
     adjustShipPostition();
 
-    //move background
+    //rotate asteroids
+    rotateAsteroids();
+
+    //slowly rotates background
     background.rotation.y += 0.001;
 
     renderer.render( scene, camera );
@@ -110,20 +118,37 @@ function keyboardUpHandler(event) {
 }
 
 function adjustShipPostition() {
+    let shipSpeed = 20;
     if(movingRight){
         if(ship.position.x <= (window.innerWidth))
-            ship.position.x += 10;
+            ship.position.x += shipSpeed;
     }
     if(movingLeft){
         if(ship.position.x >= (-window.innerWidth))
-            ship.position.x += -10;
+            ship.position.x += -shipSpeed;
     }
     if(movingUp){
         if(ship.position.y <= (window.innerHeight*1.25))
-            ship.position.y += 10;
+            ship.position.y += shipSpeed;
     }
     if(movingDown){
         if(ship.position.y >= (-window.innerHeight*1.25))
-            ship.position.y += -10;
+            ship.position.y += -shipSpeed;
     }
+}
+
+function rotateAsteroids() {
+
+    let asteroidTrans = new THREE.Vector3();
+    let asteroidRot = new THREE.Quaternion();
+    const rotX = new THREE.Matrix4().makeRotationX(asteroid.values.xRot);
+    const rotY = new THREE.Matrix4().makeRotationY(asteroid.values.yRot);
+    asteroidCF.multiply (rotX);
+    asteroidCF.multiply (rotY);
+    asteroidCF.decompose (asteroidTrans, asteroidRot, new THREE.Vector3());  // decompose the coord frame
+
+    asteroid.object.quaternion.copy (asteroidRot);
+
+    // asteroid.object.rotation.x += asteroid.values.xRot;
+    // asteroid.object.rotation.y += asteroid.values.yRot;
 }

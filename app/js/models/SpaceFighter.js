@@ -211,6 +211,7 @@ class SpaceFighter {
 
 
         spaceFighterGroup.rotation.x += Math.PI*1.5;
+        spaceFighterGroup.position.y += -500;
         return spaceFighterGroup;
 
     }
