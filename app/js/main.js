@@ -29,7 +29,7 @@ function animate() {
 
     requestAnimationFrame( animate );
 
-    ship.rotation.x += -0.01;
+    ship.rotation.x += 0.01;
 
     renderer.render( scene, camera );
 
