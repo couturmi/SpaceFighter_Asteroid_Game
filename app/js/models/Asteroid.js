@@ -7,7 +7,7 @@ class Asteroid {
         const asteroidGroup = new THREE.Group();
 
         //pick a random asteroid texture
-        let asteroidType = Math.floor(Math.random() * 3 + 1);
+        let asteroidType = Math.floor(Math.random() * 5 + 1);
         var asteroidTexture = new THREE.TextureLoader().load("img/asteroidTexture"+asteroidType+".jpg");
         asteroidTexture.wrapS = THREE.RepeatWrapping;
         asteroidTexture.wrapT = THREE.RepeatWrapping;
