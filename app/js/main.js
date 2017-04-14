@@ -1,7 +1,7 @@
 var scene, camera, renderer;
 var movingRight, movingLeft, movingUp, movingDown;
 var background, ship, sights;
-var asteroidArray, asteroidCFArray;
+var asteroidArray, asteroidCFArray, numOfAsteroids;
 
 init();
 animate();
@@ -13,6 +13,7 @@ function init() {
     movingLeft = false;
     movingUp = false;
     movingDown = false;
+    numOfAsteroids = 5;
 
     //initialize scene
     scene = new THREE.Scene();
@@ -21,6 +22,7 @@ function init() {
     renderer.setSize( window.innerWidth, window.innerHeight );
 
     $(document).ready(mouseOver);
+    window.addEventListener("mousedown", mouseDown, false);
     window.addEventListener("keydown", keyboardDownHandler, false);
     window.addEventListener("keyup", keyboardUpHandler, false);
 
@@ -43,7 +45,7 @@ function init() {
     scene.add(sights);
 
     //add asteroids
-    createNewAsteroids(5);
+    createNewAsteroids(numOfAsteroids);
 
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
     camera.position.z = 2000;
@@ -82,7 +84,6 @@ function createNewAsteroids(count) {
         asteroidArray.push(asteroid);
 
         //randomize location
-        // asteroidArray[i].object.position.y = Math.floor(Math.random() * (3*window.innerHeight - asteroid.values.radius) - (2.25*window.innerHeight)+ asteroid.values.radius);
         asteroidArray[i].object.position.x = Math.floor(Math.random() * ((4.1573*window.innerWidth) - 1.5*asteroid.values.radius) - (2.0787*window.innerWidth)+ 0.75*asteroid.values.radius);
         asteroidArray[i].object.position.y = Math.floor(Math.random() * ((4.1573*window.innerHeight) - 1.5*asteroid.values.radius) - (2.0787*window.innerHeight)+ 0.75*asteroid.values.radius);
 
@@ -99,6 +100,28 @@ function mouseOver() {
         sights.position.x = 3.55*(-window.innerWidth/2 + event.pageX);
         sights.position.y = 3.55*(window.innerHeight/2 - event.pageY);
     });
+}
+
+function mouseDown(event) {
+    //loop through asteroids
+    for(var i = 0; i < asteroidArray.length; i++){
+        //if within X Range of asteroid
+        if(event.pageX >= (window.innerWidth/2 + 0.21*asteroidArray[i].object.position.x) - 0.21*asteroidArray[i].values.radius &&
+            event.pageX <= (window.innerWidth/2 + 0.21*asteroidArray[i].object.position.x) + 0.21*asteroidArray[i].values.radius){
+            //if within Y Range of asteroid
+            if(event.pageY >= (window.innerHeight/2 - 0.21*asteroidArray[i].object.position.y) - 0.21*asteroidArray[i].values.radius &&
+                event.pageY <= (window.innerHeight/2 - 0.21*asteroidArray[i].object.position.y) + 0.21*asteroidArray[i].values.radius){
+                //blow up asteroid!!!
+                scene.remove(asteroidArray[i].object);
+                asteroidArray.splice(i, 1);
+                asteroidCFArray.splice(i, 1);
+                if(asteroidArray.length == 0){
+                    createNewAsteroids(numOfAsteroids);
+                }
+                return;
+            }
+        }
+    }
 }
 
 function keyboardDownHandler(event) {
