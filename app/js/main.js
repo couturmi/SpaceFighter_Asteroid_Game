@@ -1,7 +1,14 @@
 var scene, camera, renderer;
+/* spaceship movement */
 var movingRight, movingLeft, movingUp, movingDown;
+/* single objects */
 var background, ship, sights;
+/* asteroid arrays and data */
 var asteroidArray, asteroidCFArray, numOfAsteroids;
+/* game data */
+var totalScore, pointsForMiss, pointsForHit, level, timeLeft;
+/* DOM objects */
+var scoreElement, timeElement, levelElement;
 
 init();
 animate();
@@ -14,6 +21,10 @@ function init() {
     movingUp = false;
     movingDown = false;
     numOfAsteroids = 5;
+    totalScore = 0;
+    pointsForHit = 100;
+    pointsForMiss = -50
+    level = 1;
 
     //initialize scene
     scene = new THREE.Scene();
@@ -47,10 +58,22 @@ function init() {
     //add asteroids
     createNewAsteroids(numOfAsteroids);
 
+    //set camera and add renderer
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
     camera.position.z = 2000;
-
     document.body.appendChild( renderer.domElement );
+
+    //Create score text
+    scoreElement = document.createElement( 'span' );
+    scoreElement.innerHTML = 'Score: '+totalScore;
+    scoreElement.id = "score";
+    document.body.appendChild(scoreElement);
+
+    //Create level text
+    levelElement = document.createElement( 'span' );
+    levelElement.innerHTML = 'Level '+level;
+    levelElement.id = "level";
+    document.body.appendChild(levelElement);
 
 }
 
@@ -93,6 +116,17 @@ function createNewAsteroids(count) {
     }
 }
 
+function nextLevel() {
+    if(asteroidArray.length == 0){
+        level++;
+        levelElement.innerHTML = 'Level '+level;
+        if(level % 5 == 1) {
+            numOfAsteroids++;
+        }
+        createNewAsteroids(numOfAsteroids);
+    }
+}
+
 function mouseOver() {
     $(document).mousemove(function(event){
         //mouse controls lazer sights
@@ -115,12 +149,21 @@ function mouseDown(event) {
                 scene.remove(asteroidArray[i].object);
                 asteroidArray.splice(i, 1);
                 asteroidCFArray.splice(i, 1);
-                if(asteroidArray.length == 0){
-                    createNewAsteroids(numOfAsteroids);
-                }
+                totalScore += pointsForHit;
+                scoreElement.innerHTML = 'Score: '+totalScore;
+
+                //if all asteroids have been cleared, go to next level
+                nextLevel();
+
                 return;
             }
         }
+    }
+
+    //if no asteroids were hit, you missed. Subtract points from score
+    if(totalScore+pointsForMiss >= 0) {
+        totalScore += pointsForMiss;
+        scoreElement.innerHTML = 'Score: ' + totalScore;
     }
 }
 
