@@ -14,17 +14,17 @@ class Asteroid {
 
         //pick a random asteroid size
         let asteroidSize = Math.floor(Math.random() * 200 + 125);
-        console.log(asteroidSize);
 
         //pick random rotations and translations
         transformation = {
+            radius : asteroidSize,
             xRot : Math.random() * (Math.PI/200) - (Math.PI/400),
             yRot : Math.random() * (Math.PI/200) - (Math.PI/400)
         }
 
         //create object mesh
         var asteroidGeo = new THREE.SphereGeometry(asteroidSize,20,20);
-        var asteroidMat = new THREE.MeshBasicMaterial();
+        var asteroidMat = new THREE.MeshPhongMaterial();
         asteroidMat.map = asteroidTexture;
 
         var asteroid = new THREE.Mesh(asteroidGeo,asteroidMat);

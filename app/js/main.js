@@ -1,6 +1,7 @@
 var scene, camera, renderer;
 var movingRight, movingLeft, movingUp, movingDown;
-var background, ship, sights, asteroid;
+var background, ship, sights;
+var asteroidArray, asteroidCFArray;
 
 init();
 animate();
@@ -12,7 +13,6 @@ function init() {
     movingLeft = false;
     movingUp = false;
     movingDown = false;
-    asteroidCF = new THREE.Matrix4();
 
     //initialize scene
     scene = new THREE.Scene();
@@ -28,7 +28,7 @@ function init() {
     const lightOne = new THREE.DirectionalLight (0xFFFFFF, 1.0);
     lightOne.position.set (10, 40, 100);
     scene.add (lightOne);
-    const lightTwo = new THREE.DirectionalLight (0xFFFFFF, 1.0);
+    const lightTwo = new THREE.DirectionalLight (0xFFFFFF, 0.1);
     lightTwo.position.set (0, 40, -100);
     scene.add (lightTwo);
 
@@ -43,8 +43,7 @@ function init() {
     scene.add(sights);
 
     //add asteroids
-    asteroid = new Asteroid();
-    scene.add(asteroid.object);
+    createNewAsteroids(5);
 
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
     camera.position.z = 2000;
@@ -72,6 +71,25 @@ function animate() {
 
     renderer.render( scene, camera );
 
+}
+
+function createNewAsteroids(count) {
+    asteroidArray = [];
+    asteroidCFArray = [];
+    for(var i = 0; i < count; i++){
+        //create asteroid
+        let asteroid = new Asteroid();
+        asteroidArray.push(asteroid);
+
+        //randomize location
+        // asteroidArray[i].object.position.y = Math.floor(Math.random() * (3*window.innerHeight - asteroid.values.radius) - (2.25*window.innerHeight)+ asteroid.values.radius);
+        asteroidArray[i].object.position.x = Math.floor(Math.random() * ((4.1573*window.innerWidth) - 1.5*asteroid.values.radius) - (2.0787*window.innerWidth)+ 0.75*asteroid.values.radius);
+        asteroidArray[i].object.position.y = Math.floor(Math.random() * ((4.1573*window.innerHeight) - 1.5*asteroid.values.radius) - (2.0787*window.innerHeight)+ 0.75*asteroid.values.radius);
+
+        //add CF and add to scene
+        asteroidCFArray.push(new THREE.Matrix4());
+        scene.add(asteroidArray[i].object);
+    }
 }
 
 function mouseOver() {
@@ -139,16 +157,15 @@ function adjustShipPostition() {
 
 function rotateAsteroids() {
 
-    let asteroidTrans = new THREE.Vector3();
-    let asteroidRot = new THREE.Quaternion();
-    const rotX = new THREE.Matrix4().makeRotationX(asteroid.values.xRot);
-    const rotY = new THREE.Matrix4().makeRotationY(asteroid.values.yRot);
-    asteroidCF.multiply (rotX);
-    asteroidCF.multiply (rotY);
-    asteroidCF.decompose (asteroidTrans, asteroidRot, new THREE.Vector3());  // decompose the coord frame
+    for(var i = 0; i < asteroidArray.length; i++) {
+        let asteroidTrans = new THREE.Vector3();
+        let asteroidRot = new THREE.Quaternion();
+        const rotX = new THREE.Matrix4().makeRotationX(asteroidArray[i].values.xRot);
+        const rotY = new THREE.Matrix4().makeRotationY(asteroidArray[i].values.yRot);
+        asteroidCFArray[i].multiply(rotX);
+        asteroidCFArray[i].multiply(rotY);
+        asteroidCFArray[i].decompose(asteroidTrans, asteroidRot, new THREE.Vector3());  // decompose the coord frame
 
-    asteroid.object.quaternion.copy (asteroidRot);
-
-    // asteroid.object.rotation.x += asteroid.values.xRot;
-    // asteroid.object.rotation.y += asteroid.values.yRot;
+        asteroidArray[i].object.quaternion.copy(asteroidRot);
+    }
 }
