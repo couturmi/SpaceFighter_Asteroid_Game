@@ -6,9 +6,10 @@ var background, ship, sights;
 /* asteroid arrays and data */
 var asteroidArray, asteroidCFArray, numOfAsteroids;
 /* game data */
-var totalScore, pointsForMiss, pointsForHit, level, timeLeft;
+var totalScore, pointsForMiss, pointsForHit, level, timeStart, timeLeft, timeIncrement, gameEnded;
+const TIME_MAX = 20;
 /* DOM objects */
-var scoreElement, timeElement, levelElement;
+var scoreElement, timeElement, levelElement, gameStartElement1, gameStartElement2, gameStartElement3, gameOverElement;
 
 init();
 animate();
@@ -25,6 +26,12 @@ function init() {
     pointsForHit = 100;
     pointsForMiss = -50
     level = 1;
+    timeStart = 5;
+    timeLeft = timeStart;
+    timeIncrement = 3;
+
+    //game is not active at start
+    gameEnded = true;
 
     //initialize scene
     scene = new THREE.Scene();
@@ -75,6 +82,28 @@ function init() {
     levelElement.id = "level";
     document.body.appendChild(levelElement);
 
+    //Create time text
+    timeElement = document.createElement( 'span' );
+    timeElement.innerHTML = 'Time '+timeLeft;
+    timeElement.id = "time";
+    document.body.appendChild(timeElement);
+
+    //Create Game Start text
+    gameStartElement1 = document.createElement( 'span' );
+    gameStartElement1.innerHTML = 'Get Ready!';
+    gameStartElement1.id = "gameStart1";
+    document.body.appendChild(gameStartElement1);
+    gameStartElement2 = document.createElement( 'span' );
+    gameStartElement2.innerHTML = 'Press [Spacebar] to begin';
+    gameStartElement2.id = "gameStart2";
+    document.body.appendChild(gameStartElement2);
+
+    //Create Game Over text
+    gameOverElement = document.createElement( 'span' );
+    gameOverElement.innerHTML = '';
+    gameOverElement.id = "gameOver";
+    document.body.appendChild(gameOverElement);
+
 }
 
 function animate() {
@@ -96,6 +125,20 @@ function animate() {
 
     renderer.render( scene, camera );
 
+}
+
+function startTimer() {
+    gameEnded = false;
+    setInterval(function() {
+        if(!gameEnded) {
+            timeLeft--;
+            timeElement.innerHTML = 'Time ' + timeLeft;
+        }
+        if(timeLeft <= 0){
+            gameEnded = true;
+            gameOverElement.innerHTML = 'Game Over';
+        }
+    }, 1000);
 }
 
 function createNewAsteroids(count) {
@@ -123,6 +166,13 @@ function nextLevel() {
         if(level % 5 == 1) {
             numOfAsteroids++;
         }
+        if(timeLeft != TIME_MAX) {
+            timeLeft += timeIncrement;
+            if(timeLeft > TIME_MAX){
+                timeLeft = TIME_MAX;
+            }
+        }
+        timeElement.innerHTML = 'Time ' + timeLeft;
         createNewAsteroids(numOfAsteroids);
     }
 }
@@ -137,33 +187,36 @@ function mouseOver() {
 }
 
 function mouseDown(event) {
-    //loop through asteroids
-    for(var i = 0; i < asteroidArray.length; i++){
-        //if within X Range of asteroid
-        if(event.pageX >= (window.innerWidth/2 + 0.21*asteroidArray[i].object.position.x) - 0.21*asteroidArray[i].values.radius &&
-            event.pageX <= (window.innerWidth/2 + 0.21*asteroidArray[i].object.position.x) + 0.21*asteroidArray[i].values.radius){
-            //if within Y Range of asteroid
-            if(event.pageY >= (window.innerHeight/2 - 0.21*asteroidArray[i].object.position.y) - 0.21*asteroidArray[i].values.radius &&
-                event.pageY <= (window.innerHeight/2 - 0.21*asteroidArray[i].object.position.y) + 0.21*asteroidArray[i].values.radius){
-                //blow up asteroid!!!
-                scene.remove(asteroidArray[i].object);
-                asteroidArray.splice(i, 1);
-                asteroidCFArray.splice(i, 1);
-                totalScore += pointsForHit;
-                scoreElement.innerHTML = 'Score: '+totalScore;
+    //can't shoot if game is over
+    if(!gameEnded) {
+        //loop through asteroids
+        for (var i = 0; i < asteroidArray.length; i++) {
+            //if within X Range of asteroid
+            if (event.pageX >= (window.innerWidth / 2 + 0.21 * asteroidArray[i].object.position.x) - 0.21 * asteroidArray[i].values.radius &&
+                event.pageX <= (window.innerWidth / 2 + 0.21 * asteroidArray[i].object.position.x) + 0.21 * asteroidArray[i].values.radius) {
+                //if within Y Range of asteroid
+                if (event.pageY >= (window.innerHeight / 2 - 0.21 * asteroidArray[i].object.position.y) - 0.21 * asteroidArray[i].values.radius &&
+                    event.pageY <= (window.innerHeight / 2 - 0.21 * asteroidArray[i].object.position.y) + 0.21 * asteroidArray[i].values.radius) {
+                    //blow up asteroid!!!
+                    scene.remove(asteroidArray[i].object);
+                    asteroidArray.splice(i, 1);
+                    asteroidCFArray.splice(i, 1);
+                    totalScore += pointsForHit;
+                    scoreElement.innerHTML = 'Score: ' + totalScore;
 
-                //if all asteroids have been cleared, go to next level
-                nextLevel();
+                    //if all asteroids have been cleared, go to next level
+                    nextLevel();
 
-                return;
+                    return;
+                }
             }
         }
-    }
 
-    //if no asteroids were hit, you missed. Subtract points from score
-    if(totalScore+pointsForMiss >= 0) {
-        totalScore += pointsForMiss;
-        scoreElement.innerHTML = 'Score: ' + totalScore;
+        //if no asteroids were hit, you missed. Subtract points from score
+        if (totalScore + pointsForMiss >= 0) {
+            totalScore += pointsForMiss;
+            scoreElement.innerHTML = 'Score: ' + totalScore;
+        }
     }
 }
 
@@ -197,6 +250,11 @@ function keyboardUpHandler(event) {
             break;
         case "s":
             movingDown = false;
+            break;
+        case " ":
+            gameStartElement1.innerHTML = '';
+            gameStartElement2.innerHTML = '';
+            startTimer();
             break;
     }
 }
