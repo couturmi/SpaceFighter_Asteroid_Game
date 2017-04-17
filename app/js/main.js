@@ -6,10 +6,10 @@ var background, ship, sights;
 /* asteroid arrays and data */
 var asteroidArray, asteroidCFArray, numOfAsteroids;
 /* game data */
-var totalScore, pointsForMiss, pointsForHit, level, timeStart, timeLeft, timeIncrement, gameEnded;
+var totalScore, pointsForMiss, pointsForHit, level, timer, timeStart, timeLeft, timeIncrement, gameEnded;
 const TIME_MAX = 20;
 /* DOM objects */
-var scoreElement, timeElement, levelElement, gameStartElement1, gameStartElement2, gameStartElement3, gameOverElement;
+var scoreElement, timeElement1, timeElement2, levelElement, gameStartElement1, gameStartElement2, gameOverElement;
 
 init();
 animate();
@@ -24,9 +24,9 @@ function init() {
     numOfAsteroids = 5;
     totalScore = 0;
     pointsForHit = 100;
-    pointsForMiss = -50
+    pointsForMiss = -50;
     level = 1;
-    timeStart = 5;
+    timeStart = 10;
     timeLeft = timeStart;
     timeIncrement = 3;
 
@@ -83,10 +83,14 @@ function init() {
     document.body.appendChild(levelElement);
 
     //Create time text
-    timeElement = document.createElement( 'span' );
-    timeElement.innerHTML = 'Time '+timeLeft;
-    timeElement.id = "time";
-    document.body.appendChild(timeElement);
+    timeElement1 = document.createElement( 'span' );
+    timeElement1.innerHTML = 'Time';
+    timeElement1.id = "time1";
+    document.body.appendChild(timeElement1);
+    timeElement2 = document.createElement( 'span' );
+    timeElement2.innerHTML = timeLeft;
+    timeElement2.id = "time2";
+    document.body.appendChild(timeElement2);
 
     //Create Game Start text
     gameStartElement1 = document.createElement( 'span' );
@@ -127,12 +131,49 @@ function animate() {
 
 }
 
+function resetGame() {
+    //reset variables
+    movingRight = false;
+    movingLeft = false;
+    movingUp = false;
+    movingDown = false;
+    numOfAsteroids = 5;
+    totalScore = 0;
+    pointsForHit = 100;
+    pointsForMiss = -50;
+    level = 1;
+    timeStart = 10;
+    timeLeft = timeStart;
+    timeIncrement = 3;
+
+    //game is not active at start
+    gameEnded = true;
+
+    //reset asteroids
+    for(var i = 0; i < asteroidArray.length; i ++){
+        scene.remove(asteroidArray[i].object);
+    }
+    createNewAsteroids(numOfAsteroids);
+
+    //Reset all text
+    scoreElement.innerHTML = 'Score: '+totalScore;
+    levelElement.innerHTML = 'Level '+level;
+    timeElement2.innerHTML = timeLeft;
+    gameStartElement1.innerHTML = 'Get Ready!';
+    gameStartElement2.innerHTML = 'Press [Spacebar] to begin';
+    gameOverElement.innerHTML = '';
+
+    //clear timer
+    clearInterval(timer);
+}
+
 function startTimer() {
     gameEnded = false;
-    setInterval(function() {
+
+    timer = setInterval(function() {
         if(!gameEnded) {
             timeLeft--;
-            timeElement.innerHTML = 'Time ' + timeLeft;
+            timeElement2.innerHTML = timeLeft;
         }
         if(timeLeft <= 0){
             gameEnded = true;
@@ -172,7 +213,7 @@ function nextLevel() {
                 timeLeft = TIME_MAX;
             }
         }
-        timeElement.innerHTML = 'Time ' + timeLeft;
+        timeElement2.innerHTML = timeLeft;
         createNewAsteroids(numOfAsteroids);
     }
 }
@@ -252,9 +293,14 @@ function keyboardUpHandler(event) {
             movingDown = false;
             break;
         case " ":
-            gameStartElement1.innerHTML = '';
-            gameStartElement2.innerHTML = '';
-            startTimer();
+            if(timeLeft > 0 && gameEnded) {
+                gameStartElement1.innerHTML = '';
+                gameStartElement2.innerHTML = '';
+                gameOverElement.innerHTML = '';
+                startTimer();
+            } else if (timeLeft <= 0 && gameEnded){
+                resetGame();
+            }
             break;
     }
 }
