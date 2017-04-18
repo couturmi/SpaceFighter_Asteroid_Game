@@ -27,7 +27,7 @@ function init() {
     pointsForHit = 100;
     pointsForMiss = -50;
     level = 1;
-    timeStart = 500;
+    timeStart = 5;
     timeLeft = timeStart;
     timeIncrement = 3;
     lazerLocation = 0;
@@ -121,9 +121,6 @@ function animate() {
     requestAnimationFrame( animate );
 
     //ship angle follows lazer sights
-    // ship.rotation.x = (((sights.position.y/(window.innerHeight/2)))/Math.PI) + Math.PI*1.5;
-    // ship.rotation.z = (-(sights.position.x/(window.innerWidth/2)))/Math.PI;
-
     if(sightsMoved) {
         shipCF = new THREE.Matrix4();
         let shipRot = new THREE.Quaternion();
@@ -175,7 +172,7 @@ function resetGame() {
     pointsForHit = 100;
     pointsForMiss = -50;
     level = 1;
-    timeStart = 10;
+    timeStart = 5;
     timeLeft = timeStart;
     timeIncrement = 3;
     lazerLocation = 0;
@@ -223,16 +220,52 @@ function createNewAsteroids(count) {
     for(var i = 0; i < count; i++){
         //create asteroid
         let asteroid = new Asteroid();
-        asteroidArray.push(asteroid);
 
-        //randomize location
-        asteroidArray[i].object.position.x = Math.floor(Math.random() * ((4.1573*window.innerWidth) - 1.5*asteroid.values.radius) - (2.0787*window.innerWidth)+ 0.75*asteroid.values.radius);
-        asteroidArray[i].object.position.y = Math.floor(Math.random() * ((4.1573*window.innerHeight) - 1.5*asteroid.values.radius) - (2.0787*window.innerHeight)+ 0.75*asteroid.values.radius);
+
+
+        //randomize location (but don't overlap with another)
+        let attemptCount = 0;
+        while(true) {
+            let xPos = Math.floor(Math.random() * ((4.1573 * window.innerWidth) - 1.5 * asteroid.values.radius) - (2.0787 * window.innerWidth) + 0.75 * asteroid.values.radius);
+            let yPos = Math.floor(Math.random() * ((4.1573 * window.innerHeight) - 1.5 * asteroid.values.radius) - (2.0787 * window.innerHeight) + 0.75 * asteroid.values.radius);
+            if(!checkIfOverlap(xPos, yPos, asteroid.values.radius)) {
+                asteroid.object.position.x = xPos;
+                asteroid.object.position.y = yPos;
+                break;
+            }
+            //if it has taken too many attempts, there probably isn't a possible location, so just restart
+            attemptCount++;
+            if(attemptCount > 50){
+                for(let j = 0; j < asteroidArray.length; j++){
+                    scene.remove(asteroidArray[j].object);
+                }
+                return createNewAsteroids(count);
+            }
+        }
+        //add asteroid to array
+        asteroidArray.push(asteroid);
 
         //add CF and add to scene
         asteroidCFArray.push(new THREE.Matrix4());
         scene.add(asteroidArray[i].object);
     }
+}
+
+function checkIfOverlap(xPos, yPos, radius) {
+    for(let i = 0; i < asteroidArray.length; i++){
+        //if within X Range of asteroid
+        if(xPos + radius >= asteroidArray[i].object.position.x - asteroidArray[i].values.radius &&
+            xPos - radius <= asteroidArray[i].object.position.x + asteroidArray[i].values.radius){
+            //if within Y Range of asteroid
+            if(yPos + radius >= asteroidArray[i].object.position.y - asteroidArray[i].values.radius &&
+                yPos - radius <= asteroidArray[i].object.position.y + asteroidArray[i].values.radius){
+                //there is overlap
+                return true;
+            }
+        }
+    }
+    //no overlap
+    return false;
 }
 
 function nextLevel() {
