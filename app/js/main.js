@@ -4,7 +4,7 @@ var movingRight, movingLeft, movingUp, movingDown;
 /* single objects */
 var background, ship, shipCF, sights, lazer;
 /* asteroid arrays and data */
-var asteroidArray, asteroidCFArray, numOfAsteroids;
+var asteroidArray, asteroidCFArray, numOfAsteroids, explosionArray;
 /* game data */
 var totalScore, pointsForMiss, pointsForHit, level, timer, timeStart, timeLeft,
     timeIncrement, gameEnded, lazerLocation, lazerShot, sightsMoved;
@@ -33,6 +33,7 @@ function init() {
     lazerLocation = 0;
     lazerShot = false;
     sightsMoved = false;
+    explosionArray = [];
 
     //game is not active at start
     gameEnded = true;
@@ -177,6 +178,7 @@ function resetGame() {
     timeIncrement = 3;
     lazerLocation = 0;
     lazerShot = false;
+    explosionArray = [];
 
     //game is not active at start
     gameEnded = true;
@@ -312,7 +314,9 @@ function mouseDown(event) {
                 //if within Y Range of asteroid
                 if (event.pageY >= (window.innerHeight / 2 - 0.21 * asteroidArray[i].object.position.y) - 0.21 * asteroidArray[i].values.radius &&
                     event.pageY <= (window.innerHeight / 2 - 0.21 * asteroidArray[i].object.position.y) + 0.21 * asteroidArray[i].values.radius) {
+
                     //blow up asteroid!!!
+                    makeExplosion(asteroidArray[i].values.radius, asteroidArray[i].object.position.x, asteroidArray[i].object.position.y);
                     scene.remove(asteroidArray[i].object);
                     asteroidArray.splice(i, 1);
                     asteroidCFArray.splice(i, 1);
@@ -333,6 +337,31 @@ function mouseDown(event) {
             scoreElement.innerHTML = 'Score: ' + totalScore;
         }
     }
+}
+
+function makeExplosion(radius, xPos, yPos){
+    let explosion = new ExplosionPlane(radius*3, xPos, yPos);
+    explosion.interval = 0;
+    explosion.scaleResize = 0;
+    explosion.scale.set(0,0,0);
+
+    scene.add(explosion);
+    explosionArray.push(explosion);
+
+    var explosionInterval = setInterval(function() {
+        if(explosion.interval == 15) {
+            clearInterval(explosionInterval);
+            scene.remove(explosion);
+            explosionArray.slice(1);
+        }
+        if(explosion.interval < 5) {
+            explosion.scaleResize += 0.2;
+        } else {
+            explosion.scaleResize += -0.1;
+        }
+        explosion.scale.set(explosion.scaleResize,explosion.scaleResize,explosion.scaleResize);
+        explosion.interval++;
+    }, 50);
 }
 
 function keyboardDownHandler(event) {
