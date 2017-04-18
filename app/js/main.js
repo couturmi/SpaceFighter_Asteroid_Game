@@ -2,11 +2,12 @@ var scene, camera, renderer;
 /* spaceship movement */
 var movingRight, movingLeft, movingUp, movingDown;
 /* single objects */
-var background, ship, sights;
+var background, ship, shipCF, sights, lazer;
 /* asteroid arrays and data */
 var asteroidArray, asteroidCFArray, numOfAsteroids;
 /* game data */
-var totalScore, pointsForMiss, pointsForHit, level, timer, timeStart, timeLeft, timeIncrement, gameEnded;
+var totalScore, pointsForMiss, pointsForHit, level, timer, timeStart, timeLeft,
+    timeIncrement, gameEnded, lazerLocation, lazerShot, sightsMoved;
 const TIME_MAX = 20;
 /* DOM objects */
 var scoreElement, timeElement1, timeElement2, levelElement, gameStartElement1, gameStartElement2, gameOverElement;
@@ -26,9 +27,12 @@ function init() {
     pointsForHit = 100;
     pointsForMiss = -50;
     level = 1;
-    timeStart = 10;
+    timeStart = 500;
     timeLeft = timeStart;
     timeIncrement = 3;
+    lazerLocation = 0;
+    lazerShot = false;
+    sightsMoved = false;
 
     //game is not active at start
     gameEnded = true;
@@ -57,10 +61,12 @@ function init() {
     scene.add(background);
 
     //add ship
+    shipCF = new THREE.Matrix4();
     ship = new SpaceFighter();
     scene.add(ship);
     sights = new LazerSights();
     scene.add(sights);
+    createLazer();
 
     //add asteroids
     createNewAsteroids(numOfAsteroids);
@@ -114,15 +120,42 @@ function animate() {
 
     requestAnimationFrame( animate );
 
-    //ship follows lazer sights
-    ship.rotation.x = (((sights.position.y/(window.innerHeight/2))/2)/Math.PI) + Math.PI*1.5;
-    ship.rotation.z = (-(sights.position.x/(window.innerWidth/2))/2)/Math.PI;
+    //ship angle follows lazer sights
+    // ship.rotation.x = (((sights.position.y/(window.innerHeight/2)))/Math.PI) + Math.PI*1.5;
+    // ship.rotation.z = (-(sights.position.x/(window.innerWidth/2)))/Math.PI;
+
+    if(sightsMoved) {
+        shipCF = new THREE.Matrix4();
+        let shipRot = new THREE.Quaternion();
+        const rotX = new THREE.Matrix4().makeRotationX((((sights.position.y / (window.innerHeight / 2))/Math.PI) + Math.PI*1.5));
+        const rotZ = new THREE.Matrix4().makeRotationZ((-(sights.position.x / (window.innerWidth / 2)))/Math.PI);
+        shipCF.multiply(rotX);
+        shipCF.multiply(rotZ);
+        shipCF.decompose(new THREE.Vector3(), shipRot, new THREE.Vector3());  // decompose the coord frame
+        ship.quaternion.copy(shipRot);
+
+        sightsMoved = false;
+    }
+
+    //lazer angle follows lazer sights (if lazer has not been shot)
+    if(!lazerShot) {
+        lazer.rotation.x = (((sights.position.y / (window.innerHeight / 2))) / Math.PI) + Math.PI * 1.5;
+        lazer.rotation.z = (-(sights.position.x / (window.innerWidth / 2))) / Math.PI;
+    } else {
+        lazer.rotation.x += 0;
+        lazer.rotation.y += 0;
+    }
 
     //checks if ship should be moving
     adjustShipPostition();
 
     //rotate asteroids
     rotateAsteroids();
+
+    //if lazer has been shot, move the lazer
+    if(lazerShot) {
+        moveLazer(lazerXDest, lazerYDest);
+    }
 
     //slowly rotates background
     background.rotation.y += 0.001;
@@ -145,6 +178,8 @@ function resetGame() {
     timeStart = 10;
     timeLeft = timeStart;
     timeIncrement = 3;
+    lazerLocation = 0;
+    lazerShot = false;
 
     //game is not active at start
     gameEnded = true;
@@ -224,12 +259,18 @@ function mouseOver() {
         document.body.style.cursor = 'none';
         sights.position.x = 3.55*(-window.innerWidth/2 + event.pageX);
         sights.position.y = 3.55*(window.innerHeight/2 - event.pageY);
+        sightsMoved = true;
     });
 }
 
 function mouseDown(event) {
     //can't shoot if game is over
     if(!gameEnded) {
+        if(lazerShot == false) {
+            lazerShot = true;
+            lazerXDest = event.pageX;
+            lazerYDest = event.pageY;
+        }
         //loop through asteroids
         for (var i = 0; i < asteroidArray.length; i++) {
             //if within X Range of asteroid
@@ -308,20 +349,37 @@ function keyboardUpHandler(event) {
 function adjustShipPostition() {
     let shipSpeed = 20;
     if(movingRight){
-        if(ship.position.x <= (window.innerWidth))
+        if(ship.position.x <= (window.innerWidth)) {
             ship.position.x += shipSpeed;
+            if(!lazerShot) {
+                lazer.position.x += shipSpeed;
+            }
+        }
     }
     if(movingLeft){
-        if(ship.position.x >= (-window.innerWidth))
+        if(ship.position.x >= (-window.innerWidth)){
             ship.position.x += -shipSpeed;
+            if(!lazerShot) {
+                lazer.position.x += -shipSpeed;
+            }
+        }
+
     }
     if(movingUp){
-        if(ship.position.y <= (window.innerHeight*1.25))
+        if(ship.position.y <= (window.innerHeight*1.25)){
             ship.position.y += shipSpeed;
+            if(!lazerShot) {
+                lazer.position.y += shipSpeed;
+            }
+        }
     }
     if(movingDown){
-        if(ship.position.y >= (-window.innerHeight*1.25))
+        if(ship.position.y >= (-window.innerHeight*1.25)){
             ship.position.y += -shipSpeed;
+            if(!lazerShot) {
+                lazer.position.y += -shipSpeed;
+            }
+        }
     }
 }
 
@@ -337,5 +395,32 @@ function rotateAsteroids() {
         asteroidCFArray[i].decompose(asteroidTrans, asteroidRot, new THREE.Vector3());  // decompose the coord frame
 
         asteroidArray[i].object.quaternion.copy(asteroidRot);
+    }
+}
+
+function createLazer() {
+    lazer = new Lazer();
+    lazer.position.x = ship.position.x;
+    lazer.position.y = ship.position.y;
+    lazer.position.z = -150;
+    scene.add(lazer);
+}
+
+function moveLazer(xDest, yDest) {
+    zDistance = 1000;
+    lazer.position.x += (3.18*(-window.innerWidth/2 + xDest) - 0.45*ship.position.x)/4;
+    lazer.position.y += (3.18*(window.innerHeight/2 - yDest + 70) - 0.45*500 - 0.45*ship.position.y)/4;
+    lazer.position.z += -zDistance/4;
+
+    lazerLocation++;
+
+    //if lazer has gone its course
+    if(lazerLocation == 10){
+        scene.remove(lazer);
+        createLazer();
+        lazerShot = false;
+        lazerXDest = 0;
+        lazerYDest = 0;
+        lazerLocation = 0;
     }
 }

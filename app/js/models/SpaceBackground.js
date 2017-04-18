@@ -10,7 +10,7 @@ class SpaceBackground {
         spaceTexture.wrapS = THREE.RepeatWrapping;
         spaceTexture.wrapT = THREE.RepeatWrapping;
 
-        var spacesphereGeo = new THREE.SphereGeometry(4000,20,20);
+        var spacesphereGeo = new THREE.SphereGeometry(6000,20,20);
         var spacesphereMat = new THREE.MeshBasicMaterial();
         spacesphereMat.map = spaceTexture;
 
