@@ -41,7 +41,7 @@ class SpaceFighter {
         };
         var cockpitGeo = new THREE.ExtrudeGeometry( cockpitShape, cockpitExtrudeSettings );
             // var cockpitMat = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
-        var cockpitMat = new THREE.MeshPhongMaterial( { color: 0x1c7c1e } );
+        var cockpitMat = new THREE.MeshPhongMaterial( { color: 0x1c7c1e , specular: 0x050505, shininess: 100} );
         var cockpit = new THREE.Mesh( cockpitGeo, cockpitMat ) ;
         spaceFighterGroup.add( cockpit );
         //wings

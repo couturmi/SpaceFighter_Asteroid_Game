@@ -24,7 +24,7 @@ class Asteroid {
 
         //create object mesh
         var asteroidGeo = new THREE.SphereGeometry(asteroidSize,20,20);
-        var asteroidMat = new THREE.MeshPhongMaterial();
+        var asteroidMat = new THREE.MeshPhongMaterial({shininess: 0});
         asteroidMat.map = asteroidTexture;
 
         var asteroid = new THREE.Mesh(asteroidGeo,asteroidMat);

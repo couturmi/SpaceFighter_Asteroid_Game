@@ -125,11 +125,17 @@ function animate() {
     if(sightsMoved) {
         shipCF = new THREE.Matrix4();
         let shipRot = new THREE.Quaternion();
-        const rotX = new THREE.Matrix4().makeRotationX((((sights.position.y / (window.innerHeight / 2))/Math.PI) + Math.PI*1.5));
-        const rotZ = new THREE.Matrix4().makeRotationZ((-(sights.position.x / (window.innerWidth / 2)))/Math.PI);
-        shipCF.multiply(rotX);
-        shipCF.multiply(rotZ);
-        shipCF.decompose(new THREE.Vector3(), shipRot, new THREE.Vector3());  // decompose the coord frame
+        const rotX = (0.65*((sights.position.y / (window.innerHeight / 2))/Math.PI) + Math.PI*1.5);
+        const rotZ = 0.65*(-(sights.position.x / (window.innerWidth / 2)))/Math.PI;
+        // const rotX = new THREE.Matrix4().makeRotationX((((sights.position.y / (window.innerHeight / 2))/Math.PI) + Math.PI*1.5));
+        // const rotZ = new THREE.Matrix4().makeRotationZ((-(sights.position.x / (window.innerWidth / 2)))/Math.PI);
+        // shipCF.multiply(rotX);
+        // shipCF.multiply(rotZ);
+        shipRot.setFromAxisAngle(new THREE.Vector3(1,0,0), rotX);
+        let quat2 = new THREE.Quaternion();
+        quat2.setFromAxisAngle(new THREE.Vector3(0,0,1), rotZ);
+        shipRot.multiply(quat2);
+        // shipCF.decompose(new THREE.Vector3(), shipRot, new THREE.Vector3());  // decompose the coord frame
         ship.quaternion.copy(shipRot);
 
         sightsMoved = false;
@@ -137,8 +143,8 @@ function animate() {
 
     //lazer angle follows lazer sights (if lazer has not been shot)
     if(!lazerShot) {
-        lazer.rotation.x = (((sights.position.y / (window.innerHeight / 2))) / Math.PI) + Math.PI * 1.5;
-        lazer.rotation.z = (-(sights.position.x / (window.innerWidth / 2))) / Math.PI;
+        lazer.rotation.x = (0.65*((sights.position.y / (window.innerHeight / 2))) / Math.PI) + Math.PI * 1.5;
+        lazer.rotation.z = 0.65*(-(sights.position.x / (window.innerWidth / 2))) / Math.PI;
     } else {
         lazer.rotation.x += 0;
         lazer.rotation.y += 0;
