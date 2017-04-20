@@ -73,6 +73,7 @@ function init() {
     createNewAsteroids(numOfAsteroids);
 
     //set camera and add renderer
+    console.log(window.innerWidth +" : "+window.innerHeight);
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
     camera.position.z = 2000;
     document.body.appendChild( renderer.domElement );
